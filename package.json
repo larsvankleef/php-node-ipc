@@ -1,0 +1,9 @@
+{
+  "name": "php-node-ipc",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "serve:client": "php -S 0.0.0.0:8000",
+    "serve:server": "node server.js"
+  }
+}
