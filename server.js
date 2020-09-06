@@ -26,7 +26,8 @@ server.on('connection', (socket) => {
 
     } catch (e) {
       console.error(e)
-      socket.write(e.toString())
+      const response = process.env.NODE_ENV === 'production' ? '': e.toString()
+      socket.write(response)
     }
   })
 })
