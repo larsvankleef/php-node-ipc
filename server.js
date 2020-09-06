@@ -1,8 +1,10 @@
 const net = require('net')
 const path = require('path')
+const fs = require('fs')
 const { performance } = require('perf_hooks')
 
 const envRequire = process.env.NODE_ENV === 'production' ? require : require('import-fresh')
+const socketFile = path.join(process.cwd(), 'socket', 'render.sock')
 
 const server = net.createServer()
 
@@ -10,22 +12,35 @@ server.on('connection', (socket) => {
   socket.setEncoding('utf8')
 
   socket.on('data', (data) => {
-    const start = performance.now()
+    try {
+      const start = performance.now()
+      const { folder, component, props } = JSON.parse(data)
 
-    const { component, props } = JSON.parse(data)
-    const folder = path.join(path.dirname(__dirname), 'www', 'kaliberjs', 'includes', component)
-    const renderer = envRequire(path.join(folder, `${component}.ssr.js`))
+      const renderer = envRequire(path.join(folder, `${component}.ssr.js`))
 
-    const result = renderer(props)
-    socket.write(result)
+      socket.write(renderer(props))
 
-    const end = performance.now()
+      const end = performance.now()
 
-    console.log(`[${process.env.NODE_ENV || 'development'}] 🎉 rendered ${component}, took ${(end - start)} ms`)
+      console.log(`[${process.env.NODE_ENV || 'development'}] 🎉 rendered ${component}, took ${(end - start)} ms`)
+
+    } catch (e) {
+      console.error(e)
+      socket.write(e.toString())
+    }
   })
 })
 
-server.listen(path.join(process.cwd(), 'socket', 'render.sock'))
+try {
+  server.listen(socketFile)
+} catch (e) {
+  console.error(e)
+}
+
+process.on('uncaughtException', (e) => {
+  console.error(e)
+  fs.unlinkSync(socketFile)
+})
 
 process.on('SIGINT', () => {
   server.close()

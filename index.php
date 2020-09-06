@@ -1,15 +1,19 @@
 <?php
 
-$data = [
-  'message' => 'ping'
-];
+$root = dirname($_SERVER['DOCUMENT_ROOT']);
 
-$socket = stream_socket_client('unix://socket/render.sock');
+$socket = stream_socket_client("unix://{$root}/socket/render.sock", $errno);
 
-echo "send ";
-var_dump(json_encode($data));
-$written = fwrite($socket, json_encode($data));
+if ($errno === 0) {
+  $data = [
+    'folder' => $root . '/www/kaliberjs/includes/' . $component,
+    'component' => $component,
+    'props' => $props
+  ];
 
-echo "<br> revived";
-var_dump(fread($socket, 4096));
-fclose($socket);
+  fwrite($socket, json_encode($data));
+  echo fread($socket, 4096);
+  fclose($socket);
+} else {
+  dump('render static markup');
+}
