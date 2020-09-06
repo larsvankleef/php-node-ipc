@@ -1,22 +1,27 @@
 const net = require('net')
 const path = require('path')
+const { performance } = require('perf_hooks')
+
+const envRequire = process.env.NODE_ENV === 'production' ? require : require('import-fresh')
 
 const server = net.createServer()
 
 server.on('connection', (socket) => {
   socket.setEncoding('utf8')
 
-  const address = server.address();
-  console.log(address)
-
   socket.on('data', (data) => {
-    console.log('Data sent to server : ' + data);
+    const start = performance.now()
 
-    const response = {
-      message: 'pong'
-    }
+    const { component, props } = JSON.parse(data)
+    const folder = path.join(path.dirname(__dirname), 'www', 'kaliberjs', 'includes', component)
+    const renderer = envRequire(path.join(folder, `${component}.ssr.js`))
 
-    socket.write(JSON.stringify(response))
+    const result = renderer(props)
+    socket.write(result)
+
+    const end = performance.now()
+
+    console.log(`[${process.env.NODE_ENV || 'development'}] 🎉 rendered ${component}, took ${(end - start)} ms`)
   })
 })
 

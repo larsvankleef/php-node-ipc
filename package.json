@@ -5,5 +5,8 @@
   "scripts": {
     "serve:client": "php -S 0.0.0.0:8000",
     "serve:server": "node server.js"
+  },
+  "dependencies": {
+    "import-fresh": "^3.2.1"
   }
 }
